@@ -23,8 +23,8 @@ const SidebarItem = ({ to, icon: Icon, label, collapsed }) => {
         <Link
             to={to}
             className={`group flex items-center px-4 py-3.5 mx-3 my-1 rounded-2xl transition-all duration-300 relative ${isActive
-                    ? 'bg-primary-600 text-white shadow-xl shadow-primary-500/30'
-                    : 'text-slate-500 hover:bg-primary-50 hover:text-primary-700'
+                ? 'bg-primary-600 text-white shadow-xl shadow-primary-500/30'
+                : 'text-slate-500 hover:bg-primary-50 hover:text-primary-700'
                 }`}
         >
             <Icon className={`w-6 h-6 shrink-0 transition-transform duration-300 group-hover:scale-110 ${collapsed ? 'mx-auto' : 'mr-3'} ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-primary-500'}`} />
@@ -49,6 +49,7 @@ const DashboardLayout = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('isAuthenticated');
         navigate('/auth/login');
     };
 

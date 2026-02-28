@@ -11,7 +11,8 @@ import Clients from '../pages/dashboard/Clients';
 import Assignments from '../pages/dashboard/Assignments';
 
 const ProtectedRoute = ({ children }) => {
-    const isAuthenticated = !!localStorage.getItem('token');
+    // In cookie-based auth, we might not have a token in localStorage
+    const isAuthenticated = !!localStorage.getItem('token') || !!localStorage.getItem('isAuthenticated');
     return isAuthenticated ? children : <Navigate to="/auth/login" />;
 };
 

@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.0.118:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.0.118:3000',
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 axiosInstance.interceptors.request.use(
@@ -23,7 +24,12 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/auth/login';
+      localStorage.removeItem('isAuthenticated');
+
+      // Only redirect if NOT already on the login page to avoid refreshing and losing error state
+      if (!window.location.pathname.includes('/auth/login')) {
+        window.location.href = '/auth/login';
+      }
     }
     return Promise.reject(error);
   }

@@ -19,19 +19,20 @@ const Login = () => {
     const onLoginSubmit = async (data) => {
         setLoginError('');
         try {
-            const response = await axiosInstance.post('/auth/login', data);
+            const response = await axiosInstance.post('/api/auth/login', data);
 
-            // Assuming the API returns { token, user } or similar structure
-            const { token } = response.data;
+            // The API stores token in cookies, so we redirect on success (2xx)
+            if (response.status === 200 || response.status === 201) {
+                // Set a manual flag for ProtectedRoute since we use cookies
+                localStorage.setItem('isAuthenticated', 'true');
 
-            if (token) {
-                localStorage.setItem('token', token);
-                // navigate('/dashboard'); 
-                // Using window.location for a harder reload to ensure all states reset
+                // If there's a token in the body, we can still store it as backup
+                if (response.data?.token) {
+                    localStorage.setItem('token', response.data.token);
+                }
                 window.location.href = '/dashboard';
             }
         } catch (error) {
-            console.error('Login failed:', error);
             const message = error.response?.data?.message || 'Invalid credentials or server error. Please try again.';
             setLoginError(message);
         }
@@ -40,13 +41,13 @@ const Login = () => {
     return (
         <div className="space-y-8">
             <div>
-                <h3 className="text-3xl font-black text-slate-900 mb-2 font-display uppercase tracking-tight">Sign In</h3>
+                <h3 className="text-3xl font-black text-slate-900 mb-2 font-display uppercase tracking-tight">Log In</h3>
                 <p className="text-slate-500 font-medium tracking-tight">Access your logistics command center.</p>
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit(onLoginSubmit)}>
                 <Input
-                    label="Corporate Email"
+                    label=" Email"
                     type="email"
                     placeholder="admin@rstransport.com"
                     icon={MdEmail}
@@ -62,7 +63,7 @@ const Login = () => {
 
                 <div className="space-y-2">
                     <Input
-                        label="Security Password"
+                        label=" Password"
                         type="password"
                         placeholder="••••••••"
                         icon={MdLockOutline}
@@ -89,12 +90,12 @@ const Login = () => {
                         type="submit"
                         loading={isSubmitting}
                     >
-                        Authenticate Terminal
+                        Login
                     </Button>
                 </div>
             </form>
 
-            <div className="relative">
+            {/* <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-slate-100"></div>
                 </div>
@@ -106,10 +107,10 @@ const Login = () => {
             <div className="grid grid-cols-2 gap-4">
                 <Button variant="outline" className="w-full !rounded-2xl" size="md">Azure Directory</Button>
                 <Button variant="outline" className="w-full !rounded-2xl" size="md">Google Workspace</Button>
-            </div>
+            </div> */}
 
             <p className="text-center text-sm font-bold text-slate-400">
-                New to the platform? <Link to="/auth/signup" className="text-primary-600 hover:underline">Establish Instance</Link>
+                New to the platform? <Link to="/auth/signup" className="text-primary-600 hover:underline">Sign up</Link>
             </p>
         </div>
     );
