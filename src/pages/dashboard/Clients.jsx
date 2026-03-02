@@ -1,120 +1,266 @@
-import React from 'react';
-import { MdAdd, MdSearch, MdFilterList, MdBusiness, MdLocationOn, MdEmail, MdLayers, MdArrowOutward } from 'react-icons/md';
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    MdAdd, MdSearch, MdFilterList, MdBusiness,
+    MdLocationOn, MdEmail, MdLayers, MdArrowOutward,
+    MdMoreVert, MdEdit, MdDelete, MdAssignmentInd
+} from 'react-icons/md';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import Modal from '../../components/ui/Modal';
+import ClientForm from '../../components/forms/ClientForm';
+import { setClients, deleteClient } from '../../features/clients/clientSlice';
+import axiosInstance from '../../services/axios';
 
 const Clients = () => {
-    const clientsData = [
-        { id: 'CLT-001', name: 'Amazon India', contact: 'shipping@amazon.in', location: 'Hyderabad, TS', industry: 'E-commerce', jobs: 452, status: 'Premium' },
-        { id: 'CLT-002', name: 'Flipkart Logistics', contact: 'ops@flipkart.com', location: 'Bangalore, KA', industry: 'E-commerce', jobs: 312, status: 'Active' },
-        { id: 'CLT-003', name: 'Blue Dart', contact: 'support@bluedart.com', location: 'Mumbai, MH', industry: 'Courier', jobs: 890, status: 'Enterprise' },
-        { id: 'CLT-004', name: 'Zomato Hyperlocal', contact: 'fleet@zomato.com', location: 'Gurgaon, HR', industry: 'Food-tech', jobs: 124, status: 'Active' },
-    ];
+    const dispatch = useDispatch();
+    const clientsData = useSelector(state => state.clients.list);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeMenuId, setActiveMenuId] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchClients();
+    }, []);
+
+    const fetchClients = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            console.log('Fetching Enterprise Partners (GET /api/users/onboard)...');
+            let response;
+            try {
+                response = await axiosInstance.get('/api/users/onboard');
+            } catch (err) {
+                if (err.response?.status === 500 || err.response?.status === 404) {
+                    console.log('Primary endpoint failed, retrying...');
+                    response = await axiosInstance.get('/api/users/onboard');
+                } else {
+                    throw err;
+                }
+            }
+
+            const allUsers = response.data.data || response.data || [];
+            if (!Array.isArray(allUsers)) {
+                throw new Error('Invalid partner data format');
+            }
+
+            // Filter for clients/customers specifically
+            const clientsOnly = allUsers.filter(user => user.role === 'customer' || user.role === 'client');
+
+            // Normalize Data: Map varied API field names to standard enterprise keys
+            const normalized = clientsOnly.map((c, index) => ({
+                ...c,
+                _id: c._id || c.id || `cli-${index}-${(c.companyName || c.name || 'unnamed').replace(/\s+/g, '').toLowerCase()}`,
+                companyName: c.companyName || c.name || 'Unnamed Enterprise',
+                contactPersonName: c.contactPersonName || c.contactPerson || c.name || 'N/A',
+                industryType: c.industryType || c.industry || 'General',
+                phone: c.phone || c.contactNumber || 'N/A',
+                email: c.email || c.contactEmail || 'N/A'
+            }));
+
+            dispatch(setClients(normalized));
+        } catch (error) {
+            console.error('Fetch Failed:', error.response?.status, error.response?.data);
+            setError('Failed to synchronize with enterprise partner registry.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleRegisterClient = async (payload) => {
+        try {
+            console.log('Initiating Partner Onboarding:', payload);
+            const response = await axiosInstance.post('/api/users/onboard', payload);
+
+            if (response.status === 200 || response.status === 201) {
+                fetchClients();
+                setIsModalOpen(false);
+            }
+        } catch (error) {
+            console.error('Registration failed:', error);
+            const msg = error.response?.data?.message || 'Onboarding failed. Please check registry data.';
+            alert(msg);
+        }
+    };
+
+    const handleDeleteClient = (id) => {
+        if (window.confirm('Terminate enterprise partnership and wipe records?')) {
+            dispatch(deleteClient(id));
+            setActiveMenuId(null);
+        }
+    };
 
     const columns = [
         {
-            header: 'Commercial Entity', accessor: 'name', render: (row) => (
+            header: 'Commercial Entity', accessor: 'companyName', render: (row) => (
                 <div className="flex items-center group/client">
-                    <div className="w-12 h-12 rounded-[20px] bg-slate-900 text-white flex items-center justify-center mr-4 shadow-xl group-hover/client:scale-105 transition-all">
-                        <span className="font-black text-xs">{row.name.split(' ').map(n => n[0]).join('')}</span>
+                    <div className="w-12 h-12 rounded-[20px] bg-slate-900 text-white flex items-center justify-center mr-4 shadow-xl group-hover/client:scale-105 transition-all overflow-hidden border border-slate-700">
+                        <img
+                            src={`https://ui-avatars.com/api/?name=${row.companyName}&background=0f172a&color=fff&bold=true`}
+                            alt={row.companyName}
+                            className="w-full h-full object-cover"
+                        />
                     </div>
                     <div>
-                        <p className="font-black text-slate-800 text-[15px] tracking-tight">{row.name}</p>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{row.id}</p>
+                        <p className="font-black text-slate-800 text-[15px] tracking-tight">{row.companyName}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-0.5">REG: {row.companyRegistrationNumber || 'N/A'}</p>
                     </div>
                 </div>
             )
         },
         {
-            header: 'Communication', accessor: 'contact', render: (row) => (
-                <div className="flex items-center text-slate-500 font-bold text-xs">
-                    <MdEmail size={14} className="mr-2 text-slate-300" />
-                    {row.contact}
+            header: 'Liaison Officer', accessor: 'contactPersonName', render: (row) => (
+                <div className="flex flex-col text-xs space-y-0.5">
+                    <span className="font-black text-slate-700">{row.contactPersonName}</span>
+                    <span className="text-[10px] font-bold text-primary-500 uppercase tracking-tighter">{row.designation || 'Manager'}</span>
+                    <div className="flex items-center text-[10px] font-bold text-slate-400">
+                        <MdPhone size={10} className="mr-1" /> {row.phone}
+                    </div>
                 </div>
             )
         },
         {
-            header: 'Operations Base', accessor: 'location', render: (row) => (
-                <div className="flex items-center text-slate-500 font-bold text-xs">
-                    <MdLocationOn size={14} className="mr-2 text-primary-400" />
-                    {row.location}
-                </div>
-            )
-        },
-        { header: 'Sector', accessor: 'industry', render: (row) => <span className="text-xs font-black text-slate-400 uppercase tracking-wider">{row.industry}</span> },
-        {
-            header: 'Volume', accessor: 'jobs', render: (row) => (
-                <div className="flex items-center space-x-2">
-                    <span className="font-black text-slate-700 text-sm">{row.jobs}</span>
-                    <span className="text-[10px] text-emerald-500 font-black">+12%</span>
+            header: 'Operations Base', accessor: 'city', render: (row) => (
+                <div className="flex flex-col">
+                    <div className="flex items-center text-slate-700 font-bold text-xs">
+                        <MdLocationOn size={14} className="mr-2 text-primary-400" />
+                        {row.city || 'GLOBAL'}, {row.state || 'BASE'}
+                    </div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase ml-5 tracking-tighter">Pin: {row.pincode || 'N/A'}</span>
                 </div>
             )
         },
         {
-            header: 'Partnership', accessor: 'status', render: (row) => {
-                const colors = {
-                    'Premium': 'bg-amber-50 text-amber-600 border-amber-200 shadow-amber-100',
-                    'Enterprise': 'bg-primary-50 text-primary-600 border-primary-200 shadow-primary-100',
-                    'Active': 'bg-slate-50 text-slate-500 border-slate-200 shadow-slate-100',
-                };
-                return (
-                    <span className={`px-3 py-1.5 rounded-[12px] text-[9px] font-black uppercase tracking-[2px] border shadow-sm ${colors[row.status]}`}>
-                        {row.status}
+            header: 'Logistics Profile',
+            accessor: 'industryType',
+            render: (row) => (
+                <div className="flex flex-col items-start gap-1">
+                    <span className="text-[10px] font-black text-primary-600 bg-primary-50 px-2 py-0.5 rounded-lg border border-primary-100 uppercase tracking-wider">{row.industryType}</span>
+                    <span className="text-[9px] font-black text-slate-500 uppercase flex items-center">
+                        <MdLocalShipping size={12} className="mr-1 text-slate-300" /> {row.expectedMonthlyVehicleRequirement || 0} MV/MO
                     </span>
-                );
-            }
+                </div>
+            )
         },
         {
-            header: '', accessor: 'actions', render: () => (
-                <button className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 rounded-xl text-primary-600 transition-all border border-transparent hover:border-slate-200">
-                    <MdArrowOutward size={20} />
-                </button>
+            header: '', accessor: 'actions', render: (row) => (
+                <div className="relative">
+                    <button
+                        onClick={() => setActiveMenuId(activeMenuId === row._id ? null : row._id)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${activeMenuId === row._id ? 'bg-primary-600 text-white shadow-xl shadow-primary-500/20' : 'text-slate-300 hover:bg-slate-50 hover:text-slate-700'}`}
+                    >
+                        <MdMoreVert size={24} />
+                    </button>
+                    <AnimatePresence>
+                        {activeMenuId === row._id && (
+                            <>
+                                <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)}></div>
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                    className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-slate-50 z-20 overflow-hidden"
+                                >
+                                    <div className="p-2 space-y-1">
+                                        <button className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-600 rounded-xl transition-all uppercase tracking-wider">
+                                            <MdEdit className="mr-3" size={18} />
+                                            Update Account
+                                        </button>
+                                        <div className="border-t border-slate-50 my-1"></div>
+                                        <button onClick={() => handleDeleteClient(row._id)} className="w-full flex items-center px-4 py-3 text-[11px] font-black text-rose-500 hover:bg-rose-50 rounded-xl transition-all uppercase tracking-wider">
+                                            <MdDelete className="mr-3" size={18} />
+                                            Abort Partnership
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            </>
+                        )}
+                    </AnimatePresence>
+                </div>
             )
         },
     ];
+
+    const filteredClients = (clientsData || []).filter(client =>
+        (client.companyName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (client.contactPersonName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (client.industryType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (client.city || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="space-y-8">
             {/* Header Bar */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <div className="flex items-center space-x-2 text-primary-600 font-bold text-xs uppercase tracking-[3px] mb-3">
+                    <div className="flex items-center space-x-2 text-primary-600 font-bold text-[10px] uppercase tracking-[4pt] mb-3">
                         <MdBusiness size={16} />
-                        <span>Partnership Hub</span>
+                        <span>Corporate Partnership Intelligence</span>
                     </div>
                     <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter leading-none">Global Clients</h2>
-                    <p className="text-slate-500 font-medium text-lg mt-3">Portfolio of enterprise shipping partners and collaborative entities.</p>
+                    <p className="text-slate-500 font-medium text-lg mt-3">Portfolio of enterprise shipping partners and collaborative global entities.</p>
                 </div>
-                <Button icon={MdAdd} size="lg" className="shadow-2xl">Onboard New Client</Button>
+                <Button icon={MdAdd} size="lg" className="shadow-2xl shadow-primary-500/20 !rounded-2xl" onClick={() => setIsModalOpen(true)}>Initialize Partnership</Button>
             </div>
 
             {/* Advanced Search */}
-            <div className="premium-card !p-4 flex flex-col lg:flex-row lg:items-center gap-4 bg-white/40 border border-slate-100">
+            <div className="premium-card !p-4 flex flex-col lg:flex-row lg:items-center gap-4 border border-slate-100 shadow-sm relative">
                 <div className="relative flex-1 group">
                     <MdSearch size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-500 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search enterprise accounts: Query by name, ID, or sector..."
-                        className="w-full bg-slate-50/50 border-none rounded-2xl py-3.5 pl-12 pr-5 text-sm font-semibold focus:ring-4 focus:ring-primary-100 focus:bg-white outline-none transition-all"
+                        placeholder="Scan Enterprise Accounts: Query by name, ID, or sector..."
+                        className="w-full bg-slate-50 border-none rounded-2xl py-3.5 pl-12 pr-5 text-sm font-bold focus:ring-4 focus:ring-primary-50 focus:bg-white outline-none transition-all placeholder:text-slate-400"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center space-x-2">
-                    <Button variant="outline" icon={MdFilterList} className="!rounded-2xl border-slate-200">Industry Sector</Button>
-                    <Button variant="ghost" className="!rounded-2xl font-black text-slate-400">Archived Accounts</Button>
+                <div className="flex items-center space-x-3">
+                    <Button variant="outline" icon={MdFilterList} className="!rounded-2xl text-[10px] uppercase tracking-widest px-6 border-slate-200">Sector Audit</Button>
+                    <Button variant="secondary" icon={MdAssignmentInd} className="!rounded-2xl text-[10px] uppercase tracking-widest px-6" onClick={fetchClients}>Refresh Registry</Button>
                 </div>
+
+                {error && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute -bottom-12 left-0 right-0 flex items-center justify-between bg-primary-50 border border-primary-100 px-4 py-2 rounded-xl"
+                    >
+                        <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest flex items-center">
+                            <MdFilterList className="mr-2" size={14} />
+                            Sync Interrupted: {error}
+                        </p>
+                        <button onClick={fetchClients} className="text-[10px] font-black text-primary-600 hover:underline uppercase tracking-widest">Retry Sync</button>
+                    </motion.div>
+                )}
             </div>
 
-            <div className="premium-card !p-0 overflow-hidden border border-slate-100 shadow-2xl shadow-slate-200/40">
-                <Table columns={columns} data={clientsData} />
+            <div className={`premium-card !p-0 overflow-hidden border border-slate-50 shadow-heavy rounded-[32px] transition-all ${error ? 'mt-12' : ''}`}>
+                {isLoading ? (
+                    <div className="p-20 text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
+                        <p className="mt-4 text-slate-500 font-black text-[10px] uppercase tracking-widest">Accessing Registry...</p>
+                    </div>
+                ) : (
+                    <Table columns={columns} data={filteredClients} />
+                )}
             </div>
+
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Partner Registration Terminal" maxWidth="max-w-4xl">
+                <ClientForm onSubmit={handleRegisterClient} onCancel={() => setIsModalOpen(false)} />
+            </Modal>
 
             {/* Grid Footer Insight */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="p-6 bg-slate-900 rounded-[32px] text-white flex items-center justify-between shadow-2xl overflow-hidden relative group">
+                <div className="p-6 bg-slate-900 rounded-[32px] text-white flex items-center justify-between shadow-2xl shadow-slate-900/40 overflow-hidden relative group">
                     <div className="absolute inset-0 bg-primary-600 opacity-0 group-hover:opacity-10 transition-opacity"></div>
                     <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Growth Index</p>
-                        <p className="text-2xl font-black tracking-tighter">+18.5% <span className="text-xs text-emerald-400 font-bold underline ml-2">MoM</span></p>
+                        <p className="text-2xl font-black tracking-tighter">+18.5% <span className="text-xs text-emerald-400 font-bold underline ml-2 cursor-help">MoM</span></p>
                     </div>
                     <MdLayers size={40} className="text-slate-800" />
                 </div>

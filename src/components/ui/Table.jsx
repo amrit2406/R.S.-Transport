@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const Table = ({ columns, data, loading, onRowClick }) => {
+const Table = ({ columns, data, loading, onRowClick, className = "" }) => {
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
@@ -10,14 +10,14 @@ const Table = ({ columns, data, loading, onRowClick }) => {
     );
 
     if (!data || data.length === 0) return (
-        <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+        <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 mx-6 my-6">
             <p className="text-sm text-slate-500 font-medium">No records found matched your criteria.</p>
         </div>
     );
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-slate-100 shadow-premium bg-white">
-            <div className="overflow-x-auto">
+        <div className={`rounded-2xl bg-white ${className}`}>
+            <div className="overflow-x-visible">
                 <table className="min-w-full divide-y divide-slate-100">
                     <thead className="bg-slate-50/50">
                         <tr>

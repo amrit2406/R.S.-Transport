@@ -17,13 +17,13 @@ const driverSlice = createSlice({
             state.list.unshift(action.payload);
         },
         updateDriver: (state, action) => {
-            const index = state.list.findIndex(d => d.id === action.payload.id);
+            const index = state.list.findIndex(d => d._id === action.payload._id);
             if (index !== -1) {
                 state.list[index] = { ...state.list[index], ...action.payload };
             }
         },
         deleteDriver: (state, action) => {
-            state.list = state.list.filter(d => d.id !== action.payload);
+            state.list = state.list.filter(d => d._id !== action.payload);
         },
     },
 });
