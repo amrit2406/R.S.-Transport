@@ -29,7 +29,6 @@ const Drivers = () => {
         setIsLoading(true);
         try {
             const response = await axiosInstance.get('/api/users/onboard');
-            // The user mentioned "it has a data also in it", suggesting { data: [...] }
             const list = response.data.data || response.data || [];
             dispatch(setDrivers(list));
         } catch (error) {
@@ -41,11 +40,8 @@ const Drivers = () => {
 
     const handleRegisterDriver = async (payload) => {
         try {
-            console.log('Onboarding Payload:', payload);
             const response = await axiosInstance.post('/api/users/onboard', payload);
-
             if (response.status === 200 || response.status === 201) {
-                // Refresh list to get the latest data from server
                 fetchDrivers();
                 setIsModalOpen(false);
             }
@@ -58,7 +54,6 @@ const Drivers = () => {
 
     const handleDeleteDriver = (id) => {
         if (window.confirm('Wipe personnel record from the local fleet intelligence?')) {
-            // Ideally should call a delete API if it exists, for now keeping local delete as per current implementation
             dispatch(deleteDriver(id));
             setActiveMenuId(null);
         }
@@ -224,7 +219,8 @@ const Drivers = () => {
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Carrier Registration Terminal" maxWidth="max-w-4xl">
                 <DriverForm onSubmit={handleRegisterDriver} onCancel={() => setIsModalOpen(false)} />
             </Modal>
-        </div>
+
+        </div >
     );
 };
 

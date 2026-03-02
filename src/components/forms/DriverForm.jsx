@@ -16,9 +16,6 @@ const SectionHeader = ({ icon: Icon, title }) => (
 );
 
 const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
-    const [imagePreview, setImagePreview] = useState(initialValues?.image || null);
-    const fileInputRef = useRef(null);
-
     const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm({
         defaultValues: initialValues || {
             name: '',
@@ -46,16 +43,6 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
         }
     });
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
 
     const onFormSubmit = (data) => {
         // Ensure yearsOfExperience is a number as per JSON requirement
@@ -68,26 +55,6 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
 
     return (
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-10 pb-6">
-            {/* Visual Identity Profile */}
-            <div className="flex flex-col items-center space-y-3 pb-2">
-                <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="relative w-28 h-28 rounded-[36px] bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer group hover:border-primary-400 hover:bg-primary-50/30 transition-all overflow-hidden"
-                >
-                    {imagePreview ? (
-                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="flex flex-col items-center text-slate-400 group-hover:text-primary-500">
-                            <MdPerson size={32} />
-                        </div>
-                    )}
-                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <MdCameraAlt className="text-white" size={24} />
-                    </div>
-                </div>
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Digital Proxy Portrait</p>
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageChange} />
-            </div>
 
             {/* Section 1: Core Identity */}
             <section>
