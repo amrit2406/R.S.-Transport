@@ -26,9 +26,14 @@ const Login = () => {
                 // Set a manual flag for ProtectedRoute since we use cookies
                 localStorage.setItem('isAuthenticated', 'true');
 
-                // If there's a token in the body, we can still store it as backup
-                if (response.data?.token) {
-                    localStorage.setItem('token', response.data.token);
+                // Capture token from various possible keys (token, accessToken, access_token)
+                const token = response.data?.token || response.data?.accessToken || response.data?.access_token || response.data?.data?.token;
+                console.log('Login Response Data:', response.data);
+                if (token) {
+                    console.log('Token Captured and Saved:', token);
+                    localStorage.setItem('token', token);
+                } else {
+                    console.warn('No token found in response data. Relying on cookies?');
                 }
                 window.location.href = '/dashboard';
             }

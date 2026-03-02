@@ -10,9 +10,17 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
+    // Prevent double slashes if baseURL ends with / and config.url starts with /
+    if (config.baseURL?.endsWith('/') && config.url?.startsWith('/')) {
+      config.url = config.url.substring(1);
+    }
+
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && token !== 'undefined' && token !== 'null') {
+      console.log(`Attaching Auth: Bearer ${token.substring(0, 10)}...`);
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.log('No token for request:', config.url);
     }
     return config;
   },
@@ -22,12 +30,20 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isAuthError = error.response?.status === 401;
+    // Match /api/users/onboard even if it has baseURL or query params
+    const driversEndpointPattern = /\/api\/users\/onboard/;
+    const isDriversFetch = driversEndpointPattern.test(error.config?.url || '');
+
+    // If it's a 401 on the drivers fetch, we let the component handle the error
+    // instead of forcing a global logout.
+    if (isAuthError && !isDriversFetch) {
+      const wasAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
       localStorage.removeItem('token');
       localStorage.removeItem('isAuthenticated');
 
-      // Only redirect if NOT already on the login page to avoid refreshing and losing error state
-      if (!window.location.pathname.includes('/auth/login')) {
+      if (wasAuthenticated && !window.location.pathname.includes('/auth/login')) {
         window.location.href = '/auth/login';
       }
     }
