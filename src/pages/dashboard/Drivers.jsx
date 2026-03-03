@@ -34,8 +34,14 @@ const Drivers = () => {
             console.log('Fetching Drivers Ledger (GET /api/users/onboard)...');
             let response;
             try {
-                response = await axiosInstance.get('/api/users/onboard');
+                response = await axiosInstance.get('/api/drivers');
             } catch (err) {
+                // console.group('Onboarding API Error');
+                // console.error('Status:', err.response?.status);
+                // console.error('Data:', err.response?.data);
+                // console.error('Headers:', err.response?.headers);
+                // console.groupEnd();
+
                 if (err.response?.status === 500 || err.response?.status === 404) {
                     console.log('Onboard endpoint failed, trying fallback /api/drivers');
                     response = await axiosInstance.get('/api/drivers');

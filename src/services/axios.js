@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.0.118:3000',
+  baseURL: import.meta.env.VITE_API_URL || 'https://cumulative-falls-connectors-past.trycloudflare.com',
   headers: {
     'Content-Type': 'application/json',
   },
