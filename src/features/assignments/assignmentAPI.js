@@ -1,7 +1,7 @@
 import axiosInstance from '../../services/axios';
 
 // Admin: Get all assignments by request
-export const getAssignmentsByRequestAPI = () => axiosInstance.get('/api/assignments/request/');
+export const getAssignmentsByRequestAPI = () => axiosInstance.get('/api/requests');
 
 // Admin: Bulk assign drivers and helpers to vehicle requests
 export const bulkAssignAPI = (data) => axiosInstance.post('/api/assignments/bulk', data);

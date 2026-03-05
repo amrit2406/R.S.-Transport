@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     MdAdd, MdSearch, MdFilterList, MdBusiness,
-    MdLocationOn, MdEmail, MdLayers, MdArrowOutward,
+    MdLocationOn, MdEmail, MdLayers, MdArrowOutward, MdPhone, MdLocalShipping,
     MdMoreVert, MdEdit, MdDelete, MdAssignmentInd
 } from 'react-icons/md';
 import Table from '../../components/ui/Table';
@@ -18,6 +18,7 @@ const Clients = () => {
     const clientsData = useSelector(state => state.clients.list);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingClient, setEditingClient] = useState(null);
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -30,37 +31,31 @@ const Clients = () => {
         setIsLoading(true);
         setError(null);
         try {
-            console.log('Fetching Enterprise Partners (GET /api/users/onboard)...');
-            let response;
-            try {
-                response = await axiosInstance.get('/api/users/onboard');
-            } catch (err) {
-                if (err.response?.status === 500 || err.response?.status === 404) {
-                    console.log('Primary endpoint failed, retrying...');
-                    response = await axiosInstance.get('/api/users/onboard');
-                } else {
-                    throw err;
-                }
-            }
+            console.log('Fetching Enterprise Partners (GET /api/users?role=client)...');
+            const response = await axiosInstance.get('/api/users?role=client');
 
-            const allUsers = response.data.data || response.data || [];
-            if (!Array.isArray(allUsers)) {
+            const list = response.data.data || response.data || [];
+            if (!Array.isArray(list)) {
                 throw new Error('Invalid partner data format');
             }
 
-            // Filter for clients/customers specifically
-            const clientsOnly = allUsers.filter(user => user.role === 'customer' || user.role === 'client');
-
             // Normalize Data: Map varied API field names to standard enterprise keys
-            const normalized = clientsOnly.map((c, index) => ({
-                ...c,
-                _id: c._id || c.id || `cli-${index}-${(c.companyName || c.name || 'unnamed').replace(/\s+/g, '').toLowerCase()}`,
-                companyName: c.companyName || c.name || 'Unnamed Enterprise',
-                contactPersonName: c.contactPersonName || c.contactPerson || c.name || 'N/A',
-                industryType: c.industryType || c.industry || 'General',
-                phone: c.phone || c.contactNumber || 'N/A',
-                email: c.email || c.contactEmail || 'N/A'
-            }));
+            const normalized = list.map((c, index) => {
+                const companyName = c.companyName || c.name || c.user?.name || 'Unnamed Enterprise';
+                const contactPersonName = c.contactPersonName || c.contactPerson || c.name || c.user?.name || 'N/A';
+                const email = c.email || c.contactEmail || c.user?.email || 'N/A';
+                const phone = c.phone || c.contactNumber || c.user?.phone || 'N/A';
+
+                return {
+                    ...c,
+                    _id: c._id || c.id || c.userId || c.user?._id || `cli-${index}`,
+                    companyName,
+                    contactPersonName,
+                    email,
+                    phone,
+                    industryType: c.industryType || c.industry || 'General',
+                };
+            });
 
             dispatch(setClients(normalized));
         } catch (error) {
@@ -74,17 +69,27 @@ const Clients = () => {
     const handleRegisterClient = async (payload) => {
         try {
             console.log('Initiating Partner Onboarding:', payload);
-            const response = await axiosInstance.post('/api/users/onboard', payload);
+            const endpoint = editingClient ? `/api/users/update/${editingClient._id}` : '/api/users/onboard';
+            const method = editingClient ? 'patch' : 'post';
+
+            const response = await axiosInstance[method](endpoint, payload);
 
             if (response.status === 200 || response.status === 201) {
                 fetchClients();
                 setIsModalOpen(false);
+                setEditingClient(null);
             }
         } catch (error) {
-            console.error('Registration failed:', error);
-            const msg = error.response?.data?.message || 'Onboarding failed. Please check registry data.';
+            console.error('Operation failed:', error);
+            const msg = error.response?.data?.message || 'Operation failed. Please check registry data.';
             alert(msg);
         }
+    };
+
+    const handleEditClient = (client) => {
+        setEditingClient(client);
+        setIsModalOpen(true);
+        setActiveMenuId(null);
     };
 
     const handleDeleteClient = (id) => {
@@ -100,9 +105,9 @@ const Clients = () => {
                 <div className="flex items-center group/client">
                     <div className="w-12 h-12 rounded-[20px] bg-slate-900 text-white flex items-center justify-center mr-4 shadow-xl group-hover/client:scale-105 transition-all overflow-hidden border border-slate-700">
                         <img
-                            src={`https://ui-avatars.com/api/?name=${row.companyName}&background=0f172a&color=fff&bold=true`}
+                            src={`https://img.freepik.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_rp_progressive&w=740&q=80`}
                             alt={row.companyName}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover opacity-80"
                         />
                     </div>
                     <div>
@@ -120,29 +125,6 @@ const Clients = () => {
                     <div className="flex items-center text-[10px] font-bold text-slate-400">
                         <MdPhone size={10} className="mr-1" /> {row.phone}
                     </div>
-                </div>
-            )
-        },
-        {
-            header: 'Operations Base', accessor: 'city', render: (row) => (
-                <div className="flex flex-col">
-                    <div className="flex items-center text-slate-700 font-bold text-xs">
-                        <MdLocationOn size={14} className="mr-2 text-primary-400" />
-                        {row.city || 'GLOBAL'}, {row.state || 'BASE'}
-                    </div>
-                    <span className="text-[9px] font-black text-slate-400 uppercase ml-5 tracking-tighter">Pin: {row.pincode || 'N/A'}</span>
-                </div>
-            )
-        },
-        {
-            header: 'Logistics Profile',
-            accessor: 'industryType',
-            render: (row) => (
-                <div className="flex flex-col items-start gap-1">
-                    <span className="text-[10px] font-black text-primary-600 bg-primary-50 px-2 py-0.5 rounded-lg border border-primary-100 uppercase tracking-wider">{row.industryType}</span>
-                    <span className="text-[9px] font-black text-slate-500 uppercase flex items-center">
-                        <MdLocalShipping size={12} className="mr-1 text-slate-300" /> {row.expectedMonthlyVehicleRequirement || 0} MV/MO
-                    </span>
                 </div>
             )
         },
@@ -166,7 +148,10 @@ const Clients = () => {
                                     className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-slate-50 z-20 overflow-hidden"
                                 >
                                     <div className="p-2 space-y-1">
-                                        <button className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-600 rounded-xl transition-all uppercase tracking-wider">
+                                        <button
+                                            onClick={() => handleEditClient(row)}
+                                            className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-600 rounded-xl transition-all uppercase tracking-wider"
+                                        >
                                             <MdEdit className="mr-3" size={18} />
                                             Update Account
                                         </button>
@@ -250,8 +235,23 @@ const Clients = () => {
                 )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Partner Registration Terminal" maxWidth="max-w-4xl">
-                <ClientForm onSubmit={handleRegisterClient} onCancel={() => setIsModalOpen(false)} />
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setEditingClient(null);
+                }}
+                title={editingClient ? "Partner Registry Update" : "Partner Registration Terminal"}
+                maxWidth="max-w-4xl"
+            >
+                <ClientForm
+                    onSubmit={handleRegisterClient}
+                    onCancel={() => {
+                        setIsModalOpen(false);
+                        setEditingClient(null);
+                    }}
+                    initialValues={editingClient}
+                />
             </Modal>
 
             {/* Grid Footer Insight */}

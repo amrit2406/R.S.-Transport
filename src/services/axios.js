@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://cumulative-falls-connectors-past.trycloudflare.com',
+  baseURL: import.meta.env.VITE_API_URL || 'https://zealand-reflects-showtimes-margin.trycloudflare.com',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,10 +16,12 @@ axiosInstance.interceptors.request.use(
     }
 
     const token = localStorage.getItem('token');
+    const isPublicRoute = config.url?.includes('/api/auth/login');
+
     if (token && token !== 'undefined' && token !== 'null') {
       console.log(`Attaching Auth: Bearer ${token.substring(0, 10)}...`);
       config.headers.Authorization = `Bearer ${token}`;
-    } else {
+    } else if (!isPublicRoute) {
       console.log('No token for request:', config.url);
     }
     return config;

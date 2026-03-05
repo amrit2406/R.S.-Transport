@@ -1,2 +1,2 @@
 import axiosInstance from '../../services/axios';
-export const getVehiclesAPI = () => axiosInstance.get('/vehicles');
+export const getVehiclesAPI = () => axiosInstance.get('/api/vehicles');

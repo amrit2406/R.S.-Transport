@@ -43,11 +43,6 @@ const Login = () => {
         }
     };
 
-    const handleBypassLogin = () => {
-        localStorage.setItem('isAuthenticated', 'true');
-        window.location.href = '/dashboard';
-    };
-
     return (
         <div className="space-y-8">
             <div>
@@ -93,7 +88,7 @@ const Login = () => {
                     </div>
                 )}
 
-                <div className="pt-2 space-y-3">
+                <div className="pt-2">
                     <Button
                         className="w-full shadow-xl shadow-primary-500/20"
                         size="lg"
@@ -101,14 +96,6 @@ const Login = () => {
                         loading={isSubmitting}
                     >
                         Login
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full border-dashed border-2 text-slate-400 hover:text-primary-600 hover:border-primary-600"
-                        onClick={handleBypassLogin}
-                    >
-                        Bypass Login (Dev Only)
                     </Button>
                 </div>
             </form>

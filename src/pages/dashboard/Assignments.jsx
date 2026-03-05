@@ -25,11 +25,14 @@ import {
     getMyAssignmentsAPI,
     respondAssignmentAPI
 } from '../../features/assignments/assignmentAPI';
+import { getVehiclesAPI } from '../../features/vehicles/vehicleAPI';
+import { setVehicles } from '../../features/vehicles/vehicleSlice';
 
 const Assignments = () => {
     const dispatch = useDispatch();
     const { user } = useSelector(state => state.auth);
     const { list, requests, myAssignments, availableDrivers, loading, error } = useSelector(state => state.assignments);
+    const { list: vehicles } = useSelector(state => state.vehicles);
 
     // Explicitly check role from user object or fallback to localStorage if needed
     // In many setups, role is part of the user object
@@ -40,7 +43,11 @@ const Assignments = () => {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [bulkData, setBulkData] = useState({
         requestId: '',
-        assignments: [{ vehicleId: '', driverId: '', helperId: '' }]
+        assignments: [{
+            vehicleId: '',
+            driverId: '',
+            helperId: ''
+        }]
     });
 
     useEffect(() => {
@@ -51,12 +58,28 @@ const Assignments = () => {
         dispatch(setLoading(true));
         try {
             if (role === 'admin') {
-                const [reqRes, driversRes] = await Promise.all([
+                const [reqRes, driversRes, vehiclesRes] = await Promise.all([
                     getAssignmentsByRequestAPI(),
-                    getAvailableDriversAPI()
+                    getAvailableDriversAPI(),
+                    getVehiclesAPI()
                 ]);
                 dispatch(setRequests(reqRes.data.data || reqRes.data || []));
-                dispatch(setAvailableDrivers(driversRes.data.data || driversRes.data || []));
+                const vList = vehiclesRes.data.data || vehiclesRes.data || [];
+                console.log('Vehicles List:', vList);
+                dispatch(setVehicles(vList));
+
+                // Normalize drivers to handle nested user objects (consistent with Drivers.jsx)
+                const rawDrivers = driversRes.data.data || driversRes.data || [];
+                console.log('Raw Drivers Data:', rawDrivers);
+                const normalizedDrivers = rawDrivers.map(d => ({
+                    ...d,
+                    // Prioritize the User ID if available, as backend seems to expect User ID
+                    _id: d.userId || d.user?._id || d.user?.id || d._id || d.id,
+                    name: d.name || d.user?.name || 'Unnamed Driver',
+                    phone: d.phone || d.user?.phone || 'N/A'
+                }));
+                console.log('Normalized Drivers:', normalizedDrivers);
+                dispatch(setAvailableDrivers(normalizedDrivers));
             } else {
                 const myRes = await getMyAssignmentsAPI();
                 dispatch(setMyAssignments(myRes.data.data || myRes.data || []));
@@ -81,61 +104,63 @@ const Assignments = () => {
     };
 
     const handleBulkSubmit = async () => {
-        if (!bulkData.requestId || !bulkData.assignments[0].driverId) {
-            alert('Please select a request and at least one driver.');
+        const firstAssignment = bulkData.assignments[0];
+        if (!bulkData.requestId || !firstAssignment.driverId || !firstAssignment.vehicleId) {
+            alert('Please select a Request, Driver, and Vehicle to proceed.');
             return;
         }
 
+        const cleanedPayload = {
+            requestId: String(bulkData.requestId),
+            assignments: bulkData.assignments.map(a => ({
+                vehicleId: String(a.vehicleId),
+                driverId: String(a.driverId),
+                helperId: a.helperId && a.helperId !== "HELPER-001" ? String(a.helperId) : null
+            }))
+        };
+
         try {
-            await bulkAssignAPI(bulkData);
+            console.log("FINAL PAYLOAD:", cleanedPayload);
+            await bulkAssignAPI(cleanedPayload);
             alert('Bulk assignment deployment successful.');
             setIsBulkModalOpen(false);
             fetchData();
         } catch (err) {
-            console.error('Bulk assignment failed:', err);
+            console.error('Bulk assignment failed:', err.response?.data || err);
             alert(err.response?.data?.message || 'Bulk deployment failed.');
         }
     };
 
     // Columns configuration based on role
     const getColumns = () => {
-        const baseColumns = [
+        const columns = [
             {
-                header: 'Assignment Token', accessor: 'id', render: (row) => (
+                header: 'Identity Token',
+                accessor: '_id',
+                render: (row) => (
                     <div className="flex flex-col">
-                        <span className="font-black text-slate-900 text-sm tracking-tight">{row._id || row.id || 'ASN-NEW'}</span>
+                        <span className="font-black text-slate-900 text-[13px] tracking-tight">{row._id || row.id || 'N/A'}</span>
                         <div className="flex items-center text-[10px] font-bold text-slate-400 mt-0.5">
                             <MdSchedule size={12} className="mr-1" />
-                            {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : 'Active'}
+                            {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : 'Operational'}
                         </div>
                     </div>
                 )
-            }
-        ];
-
-        if (role === 'admin') {
-            baseColumns.push(
-                {
-                    header: 'Operational Link', accessor: 'driver', render: (row) => (
-                        <div className="flex flex-col">
-                            <span className="font-black text-slate-800 text-[13px]">{row.driver?.name || 'Unassigned'}</span>
-                            <span className="text-[11px] font-bold text-primary-500 flex items-center mt-0.5 group-hover:underline">
-                                {row.vehicle?.registrationNumber || 'NO-VEHICLE'}
-                            </span>
-                        </div>
-                    )
-                },
-                {
-                    header: 'Enterprise Client', accessor: 'client', render: (row) => (
-                        <span className="font-bold text-slate-600 text-sm">{row.request?.client?.name || 'In-House'}</span>
-                    )
-                }
-            );
-        }
-
-        baseColumns.push(
+            },
             {
-                header: 'Logistic Route', accessor: 'route', render: (row) => (
+                header: 'Client Company',
+                accessor: 'client',
+                render: (row) => (
+                    <div className="flex flex-col">
+                        <span className="font-black text-slate-800 text-[13px]">{row.client?.name || row.request?.client?.name || 'In-House'}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Enterprise Account</span>
+                    </div>
+                )
+            },
+            {
+                header: 'Logistic Route',
+                accessor: 'route',
+                render: (row) => (
                     <div className="flex items-center text-xs font-bold text-slate-700 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 group-hover:bg-white transition-colors">
                         <MdMap size={16} className="text-slate-300 mr-2" />
                         {row.route || row.request?.route || 'Standard Protocol'}
@@ -143,19 +168,24 @@ const Assignments = () => {
                 )
             },
             {
-                header: 'Status Protocol', accessor: 'status', render: (row) => {
+                header: 'Protocol Status',
+                accessor: 'status',
+                render: (row) => {
                     const status = row.status || 'pending';
                     const colors = {
                         'completed': 'bg-emerald-50 text-emerald-600 border-emerald-200/50',
+                        'fulfilled': 'bg-emerald-50 text-emerald-600 border-emerald-200/50',
                         'accepted': 'bg-primary-50 text-primary-600 border-primary-200/50 shadow-primary-50',
                         'pending': 'bg-slate-100 text-slate-400 border-slate-200 shadow-inner',
                         'rejected': 'bg-rose-50 text-rose-600 border-rose-200/50',
+                        'modified': 'bg-amber-50 text-amber-600 border-amber-200/50',
                         'in transit': 'bg-indigo-50 text-indigo-600 border-indigo-200/50',
                     };
                     return (
                         <span className={`px-3 py-1.5 rounded-[12px] text-[10px] font-black uppercase tracking-[1.5px] border shadow-sm flex items-center w-fit ${colors[status.toLowerCase()] || colors.pending}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${status === 'completed' ? 'bg-emerald-500' :
-                                    status === 'accepted' ? 'bg-primary-500' :
+                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${status === 'completed' || status === 'fulfilled' ? 'bg-emerald-500' :
+                                status === 'accepted' ? 'bg-primary-500' :
+                                    status === 'modified' ? 'bg-amber-500' :
                                         status === 'in transit' ? 'bg-indigo-500 animate-pulse' : 'bg-slate-400'
                                 }`}></div>
                             {status}
@@ -163,52 +193,45 @@ const Assignments = () => {
                     );
                 }
             }
-        );
+        ];
 
-        if (role !== 'admin') {
-            baseColumns.push({
-                header: 'Response', accessor: 'actions', render: (row) => (
-                    <div className="flex items-center gap-2">
-                        {row.status?.toLowerCase() === 'pending' && (
-                            <>
-                                <button
-                                    onClick={() => handleRespond(row._id || row.id, 'accepted')}
-                                    className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm"
-                                    title="Accept Assignment"
-                                >
-                                    <MdCheck size={18} />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const reason = prompt('Enter rejection reason:');
-                                        if (reason) handleRespond(row._id || row.id, 'rejected', reason);
-                                    }}
-                                    className="p-2 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 hover:bg-rose-100 transition-all shadow-sm"
-                                    title="Reject Assignment"
-                                >
-                                    <MdBlock size={18} />
-                                </button>
-                            </>
-                        )}
+        // Action Column
+        columns.push({
+            header: '',
+            accessor: 'actions',
+            render: (row) => (
+                <div className="flex items-center gap-2 justify-end">
+                    {role !== 'admin' && row.status?.toLowerCase() === 'pending' ? (
+                        <>
+                            <button
+                                onClick={() => handleRespond(row._id || row.id, 'accepted')}
+                                className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm"
+                                title="Accept Assignment"
+                            >
+                                <MdCheck size={18} />
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const reason = prompt('Enter rejection reason:');
+                                    if (reason) handleRespond(row._id || row.id, 'rejected', reason);
+                                }}
+                                className="p-2 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 hover:bg-rose-100 transition-all shadow-sm"
+                                title="Reject Assignment"
+                            >
+                                <MdBlock size={18} />
+                            </button>
+                        </>
+                    ) : (
                         <button className="flex items-center px-4 py-2 bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-primary-600 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all group">
-                            Details
+                            Control
                             <MdArrowForward size={14} className="ml-1.5 group-hover:translate-x-1 transition-transform" />
                         </button>
-                    </div>
-                )
-            });
-        } else {
-            baseColumns.push({
-                header: '', accessor: 'action', render: () => (
-                    <button className="flex items-center px-4 py-2 bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-primary-600 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all group">
-                        Control
-                        <MdArrowForward size={14} className="ml-1.5 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                )
-            });
-        }
+                    )}
+                </div>
+            )
+        });
 
-        return baseColumns;
+        return columns;
     };
 
     const displayData = role === 'admin' ? requests : myAssignments;
@@ -238,7 +261,7 @@ const Assignments = () => {
                 </div>
                 {role === 'admin' && (
                     <Button icon={MdAdd} size="lg" className="shadow-2xl shadow-primary-500/20" onClick={() => setIsBulkModalOpen(true)}>
-                        Bulk Engine Assignment
+                        Assign Driver for Client
                     </Button>
                 )}
             </div>
@@ -296,20 +319,60 @@ const Assignments = () => {
                             <select
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                                 value={bulkData.requestId}
-                                onChange={(e) => setBulkData({ ...bulkData, requestId: e.target.value })}
+                                onChange={(e) => {
+                                    const reqId = e.target.value;
+                                    const selectedReq = requests.find(r => (r._id || r.id) === reqId);
+                                    setBulkData({
+                                        ...bulkData,
+                                        requestId: reqId,
+                                        assignments: [{
+                                            vehicleId: selectedReq?.vehicle?._id || selectedReq?.vehicleId || '',
+                                            driverId: '',
+                                            helperId: ''
+                                        }]
+                                    });
+                                    console.log('Request Selected. Base Assignment Data:', {
+                                        reqId,
+                                        foundVehicle: selectedReq?.vehicle?._id || selectedReq?.vehicleId,
+                                        fullReq: selectedReq
+                                    });
+                                }}
                             >
                                 <option value="">Select Operational Request...</option>
-                                {requests.map(req => (
-                                    <option key={req._id || req.id} value={req._id || req.id}>
-                                        {req.id || req._id} - {req.client?.name || 'Internal'}
-                                    </option>
-                                ))}
+                                {requests
+                                    .filter(req => ['accepted', 'modified'].includes(req.status?.toLowerCase()))
+                                    .map(req => (
+                                        <option key={req._id || req.id} value={req._id || req.id}>
+                                            [{req.status?.toUpperCase()}] {req.id || req._id} - {req.client?.name || 'Internal'}
+                                        </option>
+                                    ))}
+                                {requests.filter(req => ['accepted', 'modified'].includes(req.status?.toLowerCase())).length === 0 && (
+                                    <option disabled>No accepted requests available for assignment</option>
+                                )}
                             </select>
                         </div>
 
                         <div className="space-y-4">
                             <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">Asset Allocation (Assignment 1)</label>
                             <div className="space-y-3">
+                                <div className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100 focus-within:ring-2 focus-within:ring-primary-500 transition-all">
+                                    <MdDirectionsCar size={20} className="text-primary-500 mr-3" />
+                                    <select
+                                        className="flex-1 bg-transparent border-none font-bold text-sm outline-none"
+                                        value={bulkData.assignments[0].vehicleId}
+                                        onChange={(e) => {
+                                            const updated = [...bulkData.assignments];
+                                            updated[0].vehicleId = e.target.value;
+                                            setBulkData({ ...bulkData, assignments: updated });
+                                        }}
+                                    >
+                                        <option value="">Select Available Vehicle...</option>
+                                        {vehicles.map(v => (
+                                            <option key={v._id || v.id} value={v._id || v.id}>{v.registrationNumber} ({v.model || v.type})</option>
+                                        ))}
+                                    </select>
+                                </div>
+
                                 <div className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
                                     <MdPeople size={20} className="text-primary-500 mr-3" />
                                     <select

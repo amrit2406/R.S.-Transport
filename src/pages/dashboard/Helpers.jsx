@@ -30,28 +30,30 @@ const Helpers = () => {
         setIsLoading(true);
         setError(null);
         try {
-            console.log('Fetching Support Personnel (GET /api/users/onboard)...');
-            let response;
-            try {
-                // Shared onboarding endpoint for both drivers and helpers
-                response = await axiosInstance.get('/api/users/onboard');
-            } catch (err) {
-                if (err.response?.status === 500 || err.response?.status === 404) {
-                    console.log('Primary endpoint failed, trying fallback /api/users/onboard retry...');
-                    response = await axiosInstance.get('/api/users/onboard');
-                } else {
-                    throw err;
-                }
-            }
+            console.log('Fetching Support Personnel (GET /api/users?role=helper)...');
+            const response = await axiosInstance.get('/api/users?role=helper');
 
-            const allStaff = response.data.data || response.data || [];
-            if (!Array.isArray(allStaff)) {
+            const list = response.data.data || response.data || [];
+            if (!Array.isArray(list)) {
                 throw new Error('Invalid workforce data format');
             }
 
-            // Filter for helpers specifically if the list is mixed
-            const helpersOnly = allStaff.filter(person => person.role === 'helper');
-            dispatch(setHelpers(helpersOnly));
+            // Normalize Data: Map varied API field names to standard UI keys
+            const normalized = list.map((h, index) => {
+                const name = h.name || h.fullName || h.helperName || h.user?.name || 'Unnamed Personnel';
+                const email = h.email || h.emailAddress || h.contactEmail || h.user?.email || 'N/A';
+                const phone = h.phone || h.phoneNumber || h.contactNumber || h.user?.phone || 'N/A';
+
+                return {
+                    ...h,
+                    _id: h._id || h.id || h.userId || h.user?._id || `hlp-${index}`,
+                    name,
+                    email,
+                    phone
+                };
+            });
+
+            dispatch(setHelpers(normalized));
         } catch (error) {
             console.error('Fetch Failed:', error.response?.status, error.response?.data);
             setError('Failed to synchronize with workforce support roster.');
@@ -88,7 +90,8 @@ const Helpers = () => {
             header: 'Support Force', accessor: 'name', render: (row) => (
                 <div className="flex items-center group/helper">
                     <div className="w-12 h-12 rounded-[18px] bg-slate-50 text-slate-400 flex items-center justify-center mr-4 border border-slate-200/50 shadow-inner group-hover/helper:bg-teal-50 group-hover/helper:text-teal-600 transition-all overflow-hidden">
-                        <img src={`https://ui-avatars.cc/api/?name=${row.name}&background=f0fdfa&color=0d9488&bold=true`} alt={row.name} className="opacity-70 group-hover/helper:opacity-100 transition-opacity" />
+                        {/* <img src={`https://ui-avatars.cc/api/?name=${row.name}&background=f0fdfa&color=0d9488&bold=true`} alt={row.name} className="opacity-70 group-hover/helper:opacity-100 transition-opacity" /> */}
+                        <img src={`https://img.freepik.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_rp_progressive&w=740&q=80`} alt={row.name} className="opacity-70 group-hover/helper:opacity-100 transition-opacity" />
                     </div>
                     <div>
                         <div className="flex items-center">
