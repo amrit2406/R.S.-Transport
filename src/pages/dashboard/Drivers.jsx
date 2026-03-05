@@ -84,23 +84,13 @@ const Drivers = () => {
 
     const handleRegisterDriver = async (payload) => {
         try {
-            if (editingDriver) {
-                console.log('Syncing Overwrites for Driver:', payload);
-                // Assuming there's an update API, for now we can simulate or call onboarding if it handles updates
-                // If there's no update API, we might need to skip or alert
-                const response = await axiosInstance.post('/api/users/onboard', payload);
-                if (response.status === 200 || response.status === 201) {
-                    fetchDrivers();
-                    setIsModalOpen(false);
-                    setEditingDriver(null);
-                }
-            } else {
-                console.log('Initiating Onboarding Protocol:', payload);
-                const response = await axiosInstance.post('/api/users/onboard', payload);
-                if (response.status === 200 || response.status === 201) {
-                    fetchDrivers();
-                    setIsModalOpen(false);
-                }
+            console.log('Onboarding Payload:', payload);
+            const response = await axiosInstance.post('/api/users/onboard', payload);
+
+            if (response.status === 200 || response.status === 201) {
+                // Refresh list to get the latest data from server
+                fetchDrivers();
+                setIsModalOpen(false);
             }
         } catch (error) {
             console.error('Operation failed:', error);
@@ -293,7 +283,8 @@ const Drivers = () => {
                     initialValues={editingDriver}
                 />
             </Modal>
-        </div>
+
+        </div >
     );
 };
 
