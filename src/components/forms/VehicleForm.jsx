@@ -287,13 +287,13 @@ const VehicleForm = ({ onSubmit, initialValues, onCancel }) => {
             </section>
 
             <div className="flex space-x-4 pt-8 sticky bottom-0 bg-white">
-                <Button variant="outline" className="flex-1 !rounded-[20px] py-4" onClick={onCancel}>Abort Protocol</Button>
+                <Button variant="outline" className="flex-1 !rounded-[20px] py-4" onClick={onCancel}>Cancel</Button>
                 <Button
                     type="submit"
                     className="flex-1 shadow-2xl shadow-primary-500/30 !rounded-[20px] py-4"
                     loading={isSubmitting}
                 >
-                    {initialValues ? 'Sync Parameters' : 'Deploy Asset'}
+                    {initialValues ? 'Sync Parameters' : 'Deploy'}
                 </Button>
             </div>
         </form>

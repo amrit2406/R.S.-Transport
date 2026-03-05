@@ -5,31 +5,90 @@ import {
     MdBusiness,
     MdPerson,
     MdInventory,
-    MdArrowForward
+    MdCalendarToday,
+    MdHistory,
+    MdTimeline
 } from 'react-icons/md';
 
 import RevenueChart from './RevenueChart';
-import ClientBusinessChart from './ClientBusinessChart';
-import DriverLeaderboard from './DriverLeaderboard';
-import GoodsChart from './GoodsChart';
-import Button from '../ui/Button';
+import Table from '../ui/Table';
 
-const LogisticsCommandCenter = () => {
+const LogisticsCommandCenter = ({ data }) => {
     const [activeTab, setActiveTab] = useState('revenue');
+    const [revenuePeriod, setRevenuePeriod] = useState('monthly');
 
     const tabs = [
-        { id: 'revenue', label: 'Revenue Trends', icon: MdShowChart, color: 'primary' },
-        { id: 'clients', label: 'Top Clients', icon: MdBusiness, color: 'blue' },
-        { id: 'drivers', label: 'Best Drivers', icon: MdPerson, color: 'indigo' },
-        { id: 'goods', label: 'Top Goods', icon: MdInventory, color: 'slate' },
+        { id: 'revenue', label: 'Revenue Analytics', icon: MdTimeline },
+        { id: 'clients', label: 'Clients Roster', icon: MdBusiness },
+        { id: 'drivers', label: 'Driver Squad', icon: MdPerson },
+        { id: 'helpers', label: 'Support Force', icon: MdShowChart },
+        { id: 'vehicles', label: 'Vehicle Fleet', icon: MdInventory },
+    ];
+
+    const periods = [
+        { id: 'daily', label: 'Daily', icon: MdCalendarToday },
+        { id: 'monthly', label: 'Monthly', icon: MdHistory },
+        { id: 'yearly', label: 'Yearly', icon: MdTimeline },
     ];
 
     const renderContent = () => {
+        const { clients = [], drivers = [], helpers = [], vehicles = [] } = data;
+
+        const listColumns = [
+            {
+                header: 'Identity',
+                accessor: 'name',
+                render: (row) => (
+                    <span className="font-bold text-slate-700">
+                        {row.name || row.fullName || row.registrationNumber || 'N/A'}
+                    </span>
+                )
+            },
+            {
+                header: 'Reference',
+                accessor: 'id',
+                render: (row) => (
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        {row._id || row.id || 'N/A'}
+                    </span>
+                )
+            },
+            {
+                header: 'Status',
+                accessor: 'status',
+                render: () => (
+                    <span className="px-2 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-lg uppercase">
+                        Active
+                    </span>
+                )
+            }
+        ];
+
         switch (activeTab) {
-            case 'revenue': return <RevenueChart />;
-            case 'clients': return <ClientBusinessChart />;
-            case 'drivers': return <DriverLeaderboard />;
-            case 'goods': return <GoodsChart />;
+            case 'revenue':
+                return (
+                    <div className="space-y-6">
+                        <div className="flex items-center space-x-2 bg-slate-50 p-1 rounded-xl border border-slate-100 w-fit">
+                            {periods.map((p) => (
+                                <button
+                                    key={p.id}
+                                    onClick={() => setRevenuePeriod(p.id)}
+                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${revenuePeriod === p.id
+                                            ? 'bg-white text-primary-600 shadow-sm border border-slate-200'
+                                            : 'text-slate-400 hover:text-slate-600'
+                                        }`}
+                                >
+                                    {p.label}
+                                </button>
+                            ))}
+                        </div>
+                        <RevenueChart period={revenuePeriod} />
+                    </div>
+                );
+            case 'clients': return <div className="max-h-[350px] overflow-auto"><Table columns={listColumns} data={clients} /></div>;
+            case 'drivers': return <div className="max-h-[350px] overflow-auto"><Table columns={listColumns} data={drivers} /></div>;
+            case 'helpers': return <div className="max-h-[350px] overflow-auto"><Table columns={listColumns} data={helpers} /></div>;
+            case 'vehicles': return <div className="max-h-[350px] overflow-auto"><Table columns={listColumns} data={vehicles} /></div>;
             default: return null;
         }
     };
@@ -38,11 +97,11 @@ const LogisticsCommandCenter = () => {
         const current = tabs.find(t => t.id === activeTab);
         return (
             <div>
-                <h3 className="text-xl font-black text-slate-900 font-display transition-all duration-300">
-                    {current.label} Analytics
+                <h3 className="text-xl font-black text-slate-900 font-display transition-all duration-300 uppercase tracking-tighter">
+                    {current.label}
                 </h3>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                    Operational Intelligence Protocol • Real-time Data
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mt-1">
+                    Operational Intelligence Node • {activeTab === 'revenue' ? `Period: ${revenuePeriod}` : 'Live Roster'}
                 </p>
             </div>
         );
@@ -58,8 +117,8 @@ const LogisticsCommandCenter = () => {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-tighter transition-all duration-300 whitespace-nowrap ${activeTab === tab.id
-                                    ? 'bg-white text-primary-600 shadow-sm border border-slate-100'
-                                    : 'text-slate-400 hover:text-slate-600'
+                                ? 'bg-white text-primary-600 shadow-sm border border-slate-100'
+                                : 'text-slate-400 hover:text-slate-600'
                                 }`}
                         >
                             <tab.icon size={18} className={activeTab === tab.id ? 'text-primary-600' : 'text-slate-300'} />
@@ -72,10 +131,10 @@ const LogisticsCommandCenter = () => {
             </div>
 
             {/* Dynamic Content Area */}
-            <div className="flex-1 flex flex-col justify-center">
+            <div className="flex-1 flex flex-col pt-4">
                 <AnimatePresence mode="wait">
                     <motion.div
-                        key={activeTab}
+                        key={activeTab + (activeTab === 'revenue' ? revenuePeriod : '')}
                         initial={{ opacity: 0, scale: 0.98, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.98, y: -10 }}
@@ -87,11 +146,10 @@ const LogisticsCommandCenter = () => {
             </div>
 
             {/* Footer Insight */}
-            <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[3px]">Mission Control Node 01</p>
-                <Button variant="ghost" size="sm" icon={MdArrowForward} className="flex-row-reverse group font-bold">
-                    <span className="group-hover:translate-x-[-4px] transition-transform">Comprehensive Audit</span>
-                </Button>
+            <div className="pt-6 border-t border-slate-50">
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[3px]">
+                    System Optimized • Active Session
+                </p>
             </div>
         </div>
     );

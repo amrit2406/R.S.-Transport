@@ -125,7 +125,7 @@ const ClientForm = ({ onSubmit, initialValues, onCancel }) => {
 
             {/* Section 3: Primary Contact Personnel */}
             <section>
-                <SectionHeader icon={MdPerson} title="Liaison Officer" />
+                <SectionHeader icon={MdPerson} title="Contact Officer" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Input
                         label="Contact Person Name"
@@ -178,19 +178,29 @@ const ClientForm = ({ onSubmit, initialValues, onCancel }) => {
                         icon={MdLocalShipping}
                         {...register('expectedMonthlyVehicleRequirement', { valueAsNumber: true })}
                     />
-                    <div className="flex flex-col space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Preferred Vehicle Types</label>
-                        <select
-                            multiple
-                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-4 focus:ring-primary-50 focus:bg-white outline-none transition-all"
-                            {...register('preferredVehicleTypes')}
-                        >
-                            <option value="truck">Truck</option>
-                            <option value="van">Van</option>
-                            <option value="container">Container</option>
-                            <option value="trailer">Trailer</option>
-                        </select>
-                        <p className="text-[9px] text-slate-400 font-bold italic px-1">Hold Ctrl (Cmd) to select multiple</p>
+                    <div className="flex flex-col space-y-3">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                            Preferred Vehicle Types
+                        </label>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            {["truck", "van", "container", "trailer"].map((type) => (
+                                <label
+                                    key={type}
+                                    className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-white hover:border-primary-300 transition-all"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        value={type}
+                                        {...register("preferredVehicleTypes")}
+                                        className="w-4 h-4 accent-primary-600"
+                                    />
+                                    <span className="text-sm font-bold text-slate-700 capitalize">
+                                        {type}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </section>
@@ -218,13 +228,13 @@ const ClientForm = ({ onSubmit, initialValues, onCancel }) => {
             </section>
 
             <div className="flex space-x-4 pt-8 sticky bottom-0 bg-white pb-2">
-                <Button variant="outline" className="flex-1 !rounded-[20px] py-4" onClick={onCancel}>Abort Protocol</Button>
+                <Button variant="outline" className="flex-1 !rounded-[20px] py-4" onClick={onCancel}>Cancel</Button>
                 <Button
                     type="submit"
                     className="flex-1 shadow-2xl shadow-primary-500/30 !rounded-[20px] py-4"
                     loading={isSubmitting}
                 >
-                    {initialValues ? 'Sync Overwrites' : 'Initialize Partnership'}
+                    {initialValues ? 'Sync Overwrites' : 'Confirm'}
                 </Button>
             </div>
         </form>

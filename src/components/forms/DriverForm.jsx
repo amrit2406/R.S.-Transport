@@ -58,7 +58,7 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
 
             {/* Section 1: Core Identity */}
             <section>
-                <SectionHeader icon={MdPerson} title="Personnel Intelligence" />
+                <SectionHeader icon={MdPerson} title="Personnel Information" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Input
                         label="Full Name"
@@ -67,7 +67,7 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
                         error={errors.name?.message}
                     />
                     <Input
-                        label="Corporate Email"
+                        label="Email"
                         type="email"
                         placeholder="driver@example.com"
                         icon={MdEmail}
@@ -92,7 +92,7 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
                         </select>
                     </div>
                     <Input
-                        label="Security Phone"
+                        label="Phone number"
                         placeholder="9000000002"
                         icon={MdPhone}
                         {...register('phone', { required: 'Phone required' })}
@@ -136,7 +136,7 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
 
             {/* Section 3: Professional Assets */}
             <section>
-                <SectionHeader icon={MdWork} title="Carrier Asset Credentials" />
+                <SectionHeader icon={MdWork} title="Professional Information" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Input
                         label="Driving License No."
@@ -184,6 +184,7 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
                             <option value="truck">Truck</option>
                             <option value="van">Van</option>
                             <option value="pickup">Pickup</option>
+                            <option value="Bus">Bus</option>
                         </select>
                     </div>
                 </div>
@@ -207,7 +208,7 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
 
             {/* Section 4: Citizen Ledger */}
             <section>
-                <SectionHeader icon={MdFingerprint} title="Citizen Ledger Registry" />
+                <SectionHeader icon={MdFingerprint} title="Government ID" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Input
                         label="Aadhar UID"
@@ -233,7 +234,7 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
 
             {/* Section 5: Crisis Overwatch */}
             <section>
-                <SectionHeader icon={MdContactPhone} title="Emergency Overwatch Signal" />
+                <SectionHeader icon={MdContactPhone} title="Emergency Contact" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Input
                         label="Guardian Name"
@@ -258,13 +259,13 @@ const DriverForm = ({ onSubmit, initialValues, onCancel }) => {
             </section>
 
             <div className="flex space-x-4 pt-8">
-                <Button variant="outline" className="flex-1 !rounded-[20px] py-4" onClick={onCancel}>Abort Protocol</Button>
+                <Button variant="outline" className="flex-1 !rounded-[20px] py-4" onClick={onCancel}>Cancel</Button>
                 <Button
                     type="submit"
                     className="flex-1 shadow-2xl shadow-primary-500/30 !rounded-[20px] py-4"
                     loading={isSubmitting}
                 >
-                    {initialValues ? 'Sync Overwrites' : 'Confirm Registration'}
+                    {initialValues ? 'Sync Overwrites' : 'Confirm'}
                 </Button>
             </div>
         </form>

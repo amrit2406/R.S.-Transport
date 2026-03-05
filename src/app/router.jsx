@@ -9,6 +9,7 @@ import Helpers from '../pages/dashboard/Helpers';
 import Vehicles from '../pages/dashboard/Vehicles';
 import Clients from '../pages/dashboard/Clients';
 import Assignments from '../pages/dashboard/Assignments';
+import DailyReports from '../pages/dashboard/DailyReports';
 
 const ProtectedRoute = ({ children }) => {
     // In cookie-based auth, we might not have a token in localStorage
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
             { path: 'vehicles', element: <Vehicles /> },
             { path: 'clients', element: <Clients /> },
             { path: 'assignments', element: <Assignments /> },
+            { path: 'reports', element: <DailyReports /> },
         ],
     },
 ]);

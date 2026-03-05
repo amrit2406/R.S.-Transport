@@ -191,7 +191,7 @@ const Drivers = () => {
                                     <div className="p-2 space-y-1">
                                         <button onClick={() => alert(`FULL INTEL: Driver: ${row.name}\nPhone: ${row.phone}\nLicense: ${row.drivingLicenseNumber}\nUID: ${row.aadharNumber || 'N/A'}`)} className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-600 rounded-xl transition-all uppercase tracking-wider">
                                             <MdAssignmentInd className="mr-3" size={18} />
-                                            View Full Intel
+                                            View Full
                                         </button>
                                         <button onClick={() => openEditModal(row)} className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-600 rounded-xl transition-all uppercase tracking-wider">
                                             <MdEdit className="mr-3" size={18} />
@@ -200,7 +200,7 @@ const Drivers = () => {
                                         <div className="border-t border-slate-50 my-1"></div>
                                         <button onClick={() => handleDeleteDriver(row._id)} className="w-full flex items-center px-4 py-3 text-[11px] font-black text-rose-500 hover:bg-rose-50 rounded-xl transition-all uppercase tracking-wider">
                                             <MdDelete className="mr-3" size={18} />
-                                            Terminate Profile
+                                            Terminate
                                         </button>
                                     </div>
                                 </motion.div>
@@ -224,13 +224,13 @@ const Drivers = () => {
                 <div>
                     <div className="flex items-center space-x-2 text-primary-600 font-bold text-[10px] uppercase tracking-[4pt] mb-3">
                         <MdPerson size={16} />
-                        <span>Workforce Intelligence Ledger</span>
+                        <span>Driver Information</span>
                     </div>
-                    <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter">Fleet Personnel</h2>
+                    <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter">Truck Drivers</h2>
                     <p className="text-slate-500 font-medium text-lg mt-2 tracking-tight">Access the highly-secured registry of verified carrier identities and operational credentials.</p>
                 </div>
                 <Button icon={MdAdd} size="lg" className="shadow-2xl shadow-primary-500/30 !rounded-2xl" onClick={() => { setEditingDriver(null); setIsModalOpen(true); }}>
-                    Initialize Onboarding
+                    Add Driver
                 </Button>
             </div>
 
@@ -265,7 +265,7 @@ const Drivers = () => {
                 )}
             </div>
 
-            <div className={`premium-card !p-0 overflow-hidden border border-slate-50 shadow-heavy rounded-[32px] transition-all ${error ? 'mt-12' : ''}`}>
+            <div className={`premium-card !p-0 border border-slate-50 shadow-heavy rounded-[32px] transition-all ${error ? 'mt-12' : ''}`}>
                 {isLoading ? (
                     <div className="p-20 text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
@@ -276,7 +276,7 @@ const Drivers = () => {
                 )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingDriver ? "Asset Synchronization Terminal" : "Carrier Registration Terminal"} maxWidth="max-w-4xl">
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingDriver ? "Asset Synchronization Terminal" : "Drivers Details"} maxWidth="max-w-4xl">
                 <DriverForm
                     onSubmit={handleRegisterDriver}
                     onCancel={() => setIsModalOpen(false)}

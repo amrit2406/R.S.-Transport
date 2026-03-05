@@ -12,7 +12,8 @@ import {
     MdNotificationsNone,
     MdSearch,
     MdMenuOpen,
-    MdChevronLeft
+    MdChevronLeft,
+    MdDescription
 } from 'react-icons/md';
 
 const SidebarItem = ({ to, icon: Icon, label, collapsed }) => {
@@ -96,6 +97,7 @@ const DashboardLayout = () => {
                     <SidebarItem to="/dashboard/vehicles" icon={MdDirectionsCar} label="Vehicles" collapsed={collapsed} />
                     <SidebarItem to="/dashboard/clients" icon={MdBusiness} label="Clients" collapsed={collapsed} />
                     <SidebarItem to="/dashboard/assignments" icon={MdAssignment} label="Assignments" collapsed={collapsed} />
+                    <SidebarItem to="/dashboard/reports" icon={MdDescription} label="Daily Report" collapsed={collapsed} />
                 </nav>
 
                 <div className="p-6 border-t border-slate-50">

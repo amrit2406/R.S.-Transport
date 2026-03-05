@@ -1,20 +1,68 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import {
     MdTrendingUp,
     MdPeople,
     MdDirectionsCar,
     MdBusiness,
-    MdAdd,
-    MdLayers,
-    MdAutoGraph
+    MdAutoGraph,
+    MdSupervisorAccount
 } from 'react-icons/md';
 
 import StatCard from '../../components/ui/StatCard';
-import Button from '../../components/ui/Button';
 import LogisticsCommandCenter from '../../components/dashboard/LogisticsCommandCenter';
 
+// Import necessary actions and APIs
+import { setClients } from '../../features/clients/clientSlice';
+import { setDrivers } from '../../features/drivers/driverSlice';
+import { setHelpers } from '../../features/helpers/helperSlice';
+import { setVehicles } from '../../features/vehicles/vehicleSlice';
+
+import { getClientsAPI } from '../../features/clients/clientAPI';
+import { getDriversAPI } from '../../features/drivers/driverAPI';
+import { getVehiclesAPI } from '../../features/vehicles/vehicleAPI';
+import axiosInstance from '../../services/axios';
+
 const DashboardHome = () => {
+    const dispatch = useDispatch();
+
+    // Select data from Redux
+    const clients = useSelector(state => state.clients.list);
+    const drivers = useSelector(state => state.drivers.list);
+    const helpers = useSelector(state => state.helpers.list);
+    const vehicles = useSelector(state => state.vehicles.list);
+
+    useEffect(() => {
+        fetchAllData();
+    }, []);
+
+    const fetchAllData = async () => {
+        try {
+            // Fetch everything in parallel
+            const [clientsRes, driversRes, vehiclesRes, helpersRes] = await Promise.all([
+                getClientsAPI(),
+                getDriversAPI(),
+                getVehiclesAPI(),
+                axiosInstance.get('/api/users?role=helper') // Direct call for helpers as per Helpers.jsx
+            ]);
+
+            dispatch(setClients(clientsRes.data?.data || clientsRes.data || []));
+            dispatch(setDrivers(driversRes.data?.data || driversRes.data || []));
+            dispatch(setVehicles(vehiclesRes.data?.data || vehiclesRes.data || []));
+            dispatch(setHelpers(helpersRes.data?.data || helpersRes.data || []));
+        } catch (error) {
+            console.error('[Dashboard] Data Sync Failure:', error);
+        }
+    };
+
+    const counts = {
+        clients: clients.length,
+        drivers: drivers.length,
+        helpers: helpers.length,
+        vehicles: vehicles.length
+    };
+
     return (
         <div className="space-y-10 pb-12">
             {/* High-Impact Header */}
@@ -29,77 +77,47 @@ const DashboardHome = () => {
                         <span>Operations Dashboard</span>
                     </motion.div>
                     <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter leading-none mb-3">
-                        Mission Command
+                        Dashboard
                     </h2>
                     <p className="text-slate-500 font-medium text-lg">
                         A unified view of your fleet operational intelligence.
                     </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
-                    <Button variant="outline" size="lg" className="!rounded-2xl border-slate-200">Global Ledger</Button>
-                    <Button size="lg" icon={MdAdd} className="shadow-2xl shadow-primary-500/20 !rounded-2xl">Engineer Assignment</Button>
-                </div>
             </div>
 
             {/* Core KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Revenue (MTD)" value="$67,420" icon={MdTrendingUp} trend="up" trendValue="12.5" color="blue" />
-                <StatCard title="Personnel Active" value="142" icon={MdPeople} trend="up" trendValue="8.2" color="indigo" />
-                <StatCard title="Deployment" value="94.8%" icon={MdDirectionsCar} trend="up" trendValue="2.4" color="emerald" />
-                <StatCard title="Partner Grid" value="18" icon={MdBusiness} trend="up" trendValue="4.1" color="purple" />
+                <StatCard
+                    title="Clients"
+                    value={counts.clients}
+                    icon={MdBusiness}
+                    color="blue"
+                />
+                <StatCard
+                    title="Drivers"
+                    value={counts.drivers}
+                    icon={MdPeople}
+                    color="indigo"
+                />
+                <StatCard
+                    title="Helpers"
+                    value={counts.helpers}
+                    icon={MdSupervisorAccount}
+                    color="emerald"
+                />
+                <StatCard
+                    title="Vehicles"
+                    value={counts.vehicles}
+                    icon={MdDirectionsCar}
+                    color="amber"
+                />
             </div>
 
             {/* The Unified Logistics Command Center */}
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-
-                {/* Main Unified Engine */}
-                <div className="xl:col-span-3">
-                    <LogisticsCommandCenter />
+                <div className="xl:col-span-4">
+                    <LogisticsCommandCenter data={{ clients, drivers, helpers, vehicles }} />
                 </div>
-
-                {/* Tactical Status Column */}
-                <div className="space-y-6">
-                    <div className="premium-card bg-slate-900 border-none relative overflow-hidden group min-h-[250px] flex flex-col justify-between">
-                        <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-primary-500/20 rounded-full blur-3xl"></div>
-
-                        <div>
-                            <h4 className="text-white font-black text-lg font-display mb-1">Operational Pulse</h4>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[2px]">System: Optimized</p>
-                        </div>
-
-                        <div className="space-y-5">
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    <span>Delivery Delta</span>
-                                    <span className="text-emerald-400">+12%</span>
-                                </div>
-                                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                                    <motion.div initial={{ width: 0 }} animate={{ width: "92%" }} className="h-full bg-emerald-500 shadow-[0_0_12px_#10b981]"></motion.div>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    <span>Grid Integrity</span>
-                                    <span className="text-blue-400">96.8%</span>
-                                </div>
-                                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                                    <motion.div initial={{ width: 0 }} animate={{ width: "96.8%" }} className="h-full bg-blue-500 shadow-[0_0_12px_#3b82f6]"></motion.div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="premium-card bg-primary-50 border-primary-100 flex items-center p-6 space-x-4">
-                        <div className="w-12 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-lg">
-                            <MdLayers size={24} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-black text-primary-600 uppercase tracking-widest">Compliance</p>
-                            <p className="text-[11px] font-bold text-slate-600 leading-tight mt-1">All fleet assets are within safety protocols.</p>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     );

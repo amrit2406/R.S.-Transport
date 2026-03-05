@@ -226,12 +226,12 @@ const Vehicles = () => {
                 <div>
                     <div className="flex items-center space-x-2 text-primary-600 font-bold text-[10px] uppercase tracking-[4pt] mb-3">
                         <MdDirectionsCar size={16} />
-                        <span>Fleet Asset Intelligence</span>
+                        <span>All Vehicle Information</span>
                     </div>
-                    <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter leading-none">Vehicle Registry</h2>
+                    <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter leading-none">Vehicle List</h2>
                     <p className="text-slate-500 font-medium text-lg mt-3">Advanced monitoring of vehicle operational status and lifecycle.</p>
                 </div>
-                <Button icon={MdAdd} size="lg" className="shadow-2xl shadow-primary-500/20 !rounded-2xl" onClick={() => setIsModalOpen(true)}>Inventory Asset</Button>
+                <Button icon={MdAdd} size="lg" className="shadow-2xl shadow-primary-500/20 !rounded-2xl" onClick={() => setIsModalOpen(true)}>Add Truck</Button>
             </div>
 
             {/* Control Section */}
@@ -283,7 +283,7 @@ const Vehicles = () => {
                     setEditingVehicle(null);
                     setIsModalOpen(false);
                 }}
-                title={editingVehicle ? "Asset Parameter Synchronization" : "Asset Acquisition Terminal"}
+                title={editingVehicle ? "Asset Parameter Synchronization" : "Truck Details"}
                 maxWidth="max-w-4xl"
             >
                 <VehicleForm

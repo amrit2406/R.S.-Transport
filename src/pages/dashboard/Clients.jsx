@@ -153,12 +153,12 @@ const Clients = () => {
                                             className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-600 rounded-xl transition-all uppercase tracking-wider"
                                         >
                                             <MdEdit className="mr-3" size={18} />
-                                            Update Account
+                                            Update
                                         </button>
                                         <div className="border-t border-slate-50 my-1"></div>
                                         <button onClick={() => handleDeleteClient(row._id)} className="w-full flex items-center px-4 py-3 text-[11px] font-black text-rose-500 hover:bg-rose-50 rounded-xl transition-all uppercase tracking-wider">
                                             <MdDelete className="mr-3" size={18} />
-                                            Abort Partnership
+                                            Terminate
                                         </button>
                                     </div>
                                 </motion.div>
@@ -186,10 +186,10 @@ const Clients = () => {
                         <MdBusiness size={16} />
                         <span>Corporate Partnership Intelligence</span>
                     </div>
-                    <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter leading-none">Global Clients</h2>
+                    <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter leading-none">Clients</h2>
                     <p className="text-slate-500 font-medium text-lg mt-3">Portfolio of enterprise shipping partners and collaborative global entities.</p>
                 </div>
-                <Button icon={MdAdd} size="lg" className="shadow-2xl shadow-primary-500/20 !rounded-2xl" onClick={() => setIsModalOpen(true)}>Initialize Partnership</Button>
+                <Button icon={MdAdd} size="lg" className="shadow-2xl shadow-primary-500/20 !rounded-2xl" onClick={() => setIsModalOpen(true)}>Add Clients</Button>
             </div>
 
             {/* Advanced Search */}
@@ -206,7 +206,7 @@ const Clients = () => {
                 </div>
                 <div className="flex items-center space-x-3">
                     <Button variant="outline" icon={MdFilterList} className="!rounded-2xl text-[10px] uppercase tracking-widest px-6 border-slate-200">Sector Audit</Button>
-                    <Button variant="secondary" icon={MdAssignmentInd} className="!rounded-2xl text-[10px] uppercase tracking-widest px-6" onClick={fetchClients}>Refresh Registry</Button>
+                    <Button variant="secondary" icon={MdAssignmentInd} className="!rounded-2xl text-[10px] uppercase tracking-widest px-6" onClick={fetchClients}>Refresh List</Button>
                 </div>
 
                 {error && (
@@ -224,7 +224,7 @@ const Clients = () => {
                 )}
             </div>
 
-            <div className={`premium-card !p-0 overflow-hidden border border-slate-50 shadow-heavy rounded-[32px] transition-all ${error ? 'mt-12' : ''}`}>
+            <div className={`premium-card !p-0 border border-slate-50 shadow-heavy rounded-[32px] transition-all ${error ? 'mt-12' : ''}`}>
                 {isLoading ? (
                     <div className="p-20 text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
@@ -241,7 +241,7 @@ const Clients = () => {
                     setIsModalOpen(false);
                     setEditingClient(null);
                 }}
-                title={editingClient ? "Partner Registry Update" : "Partner Registration Terminal"}
+                title={editingClient ? "Partner Registry Update" : "Client Details"}
                 maxWidth="max-w-4xl"
             >
                 <ClientForm
@@ -255,7 +255,7 @@ const Clients = () => {
             </Modal>
 
             {/* Grid Footer Insight */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="p-6 bg-slate-900 rounded-[32px] text-white flex items-center justify-between shadow-2xl shadow-slate-900/40 overflow-hidden relative group">
                     <div className="absolute inset-0 bg-primary-600 opacity-0 group-hover:opacity-10 transition-opacity"></div>
                     <div>
@@ -264,7 +264,7 @@ const Clients = () => {
                     </div>
                     <MdLayers size={40} className="text-slate-800" />
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 };

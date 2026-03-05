@@ -31,7 +31,7 @@ const HelperForm = ({ onSubmit, initialValues, onCancel }) => {
     return (
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8 pb-4">
             <section>
-                <SectionHeader icon={MdPerson} title="Personnel Intelligence" />
+                <SectionHeader icon={MdPerson} title="Personal Information" />
                 <div className="space-y-5">
                     <Input
                         label="Full Name"
@@ -40,7 +40,7 @@ const HelperForm = ({ onSubmit, initialValues, onCancel }) => {
                         error={errors.name?.message}
                     />
                     <Input
-                        label="Corporate Email"
+                        label="Email"
                         type="email"
                         placeholder="helper@example.com"
                         icon={MdEmail}
@@ -48,7 +48,7 @@ const HelperForm = ({ onSubmit, initialValues, onCancel }) => {
                         error={errors.email?.message}
                     />
                     <Input
-                        label="Security Phone"
+                        label="Phone Number"
                         placeholder="9000000003"
                         icon={MdPhone}
                         {...register('phone', { required: 'Phone required' })}
@@ -66,13 +66,13 @@ const HelperForm = ({ onSubmit, initialValues, onCancel }) => {
             </section>
 
             <div className="flex space-x-4 pt-4">
-                <Button variant="outline" className="flex-1 !rounded-[20px] py-4" onClick={onCancel}>Abort Recruitment</Button>
+                <Button variant="outline" className="flex-1 !rounded-[20px] py-4" onClick={onCancel}>Cancel</Button>
                 <Button
                     type="submit"
                     className="flex-1 shadow-2xl shadow-teal-500/30 !rounded-[20px] py-4 bg-teal-600 hover:bg-teal-700"
                     loading={isSubmitting}
                 >
-                    {initialValues ? 'Sync Overwrites' : 'Confirm Recruitment'}
+                    {initialValues ? 'Sync Overwrites' : 'Confirm'}
                 </Button>
             </div>
         </form>

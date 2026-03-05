@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     MdAdd, MdSearch, MdFilterList, MdAssignment, MdSchedule,
     MdCheckCircleOutline, MdMap, MdArrowForward, MdPeople,
-    MdDirectionsCar, MdSupervisorAccount, MdClose, MdCheck, MdBlock
+    MdDirectionsCar, MdSupervisorAccount, MdClose, MdCheck, MdBlock,
+    MdMoreVert, MdEdit, MdDelete
 } from 'react-icons/md';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
@@ -41,6 +42,7 @@ const Assignments = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
+    const [activeMenuId, setActiveMenuId] = useState(null);
     const [bulkData, setBulkData] = useState({
         requestId: '',
         assignments: [{
@@ -131,44 +133,61 @@ const Assignments = () => {
         }
     };
 
+    // Handlers for action menu
+    const handleCompleteAssignment = async (id) => {
+        try {
+            await handleRespond(id, 'completed');
+            setActiveMenuId(null);
+        } catch (err) {
+            console.error('Failed to complete assignment:', err);
+        }
+    };
+
     // Columns configuration based on role
     const getColumns = () => {
         const columns = [
             {
-                header: 'Identity Token',
-                accessor: '_id',
-                render: (row) => (
-                    <div className="flex flex-col">
-                        <span className="font-black text-slate-900 text-[13px] tracking-tight">{row._id || row.id || 'N/A'}</span>
-                        <div className="flex items-center text-[10px] font-bold text-slate-400 mt-0.5">
-                            <MdSchedule size={12} className="mr-1" />
-                            {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : 'Operational'}
-                        </div>
-                    </div>
-                )
-            },
-            {
-                header: 'Client Company',
+                header: 'Company Name',
                 accessor: 'client',
                 render: (row) => (
                     <div className="flex flex-col">
                         <span className="font-black text-slate-800 text-[13px]">{row.client?.name || row.request?.client?.name || 'In-House'}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Enterprise Account</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Enterprise Partner</span>
                     </div>
                 )
             },
             {
-                header: 'Logistic Route',
-                accessor: 'route',
+                header: 'Contact Person',
+                accessor: 'contact',
                 render: (row) => (
-                    <div className="flex items-center text-xs font-bold text-slate-700 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 group-hover:bg-white transition-colors">
-                        <MdMap size={16} className="text-slate-300 mr-2" />
-                        {row.route || row.request?.route || 'Standard Protocol'}
+                    <div className="flex flex-col">
+                        <span className="font-black text-slate-700 text-[12px]">{row.client?.contactPersonName || row.request?.client?.contactPersonName || 'N/A'}</span>
+                        <span className="text-[10px] font-bold text-primary-500 uppercase tracking-tighter">Liaison Officer</span>
                     </div>
                 )
             },
             {
-                header: 'Protocol Status',
+                header: 'Source',
+                accessor: 'source',
+                render: (row) => (
+                    <div className="flex flex-col">
+                        <span className="font-black text-slate-700 text-[12px]">{row.source || row.request?.source || 'Origin Point'}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Pickup Node</span>
+                    </div>
+                )
+            },
+            {
+                header: 'Destination',
+                accessor: 'destination',
+                render: (row) => (
+                    <div className="flex flex-col">
+                        <span className="font-black text-slate-700 text-[12px]">{row.destination || row.request?.destination || 'Terminal Point'}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Drop Node</span>
+                    </div>
+                )
+            },
+            {
+                header: 'Status',
                 accessor: 'status',
                 render: (row) => {
                     const status = row.status || 'pending';
@@ -192,44 +211,71 @@ const Assignments = () => {
                         </span>
                     );
                 }
+            },
+            {
+                header: '',
+                accessor: 'actions',
+                render: (row) => (
+                    <div className="relative flex justify-end">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuId(activeMenuId === row._id ? null : row._id);
+                            }}
+                            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${activeMenuId === row._id ? 'bg-primary-600 text-white shadow-xl shadow-primary-500/20' : 'text-slate-300 hover:bg-slate-50 hover:text-slate-700'}`}
+                        >
+                            <MdMoreVert size={24} />
+                        </button>
+                        <AnimatePresence>
+                            {activeMenuId === row._id && (
+                                <>
+                                    <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)}></div>
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                        className="absolute right-0 mt-12 w-52 bg-white rounded-2xl shadow-2xl border border-slate-50 z-20 overflow-hidden"
+                                    >
+                                        <div className="p-2 space-y-1">
+                                            <button
+                                                onClick={() => {
+                                                    alert("Update logic to be implemented or linked to existing Edit flow.");
+                                                    setActiveMenuId(null);
+                                                }}
+                                                className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-600 rounded-xl transition-all uppercase tracking-wider"
+                                            >
+                                                <MdEdit className="mr-3" size={18} />
+                                                Update
+                                            </button>
+                                            <button
+                                                onClick={() => handleCompleteAssignment(row._id || row.id)}
+                                                className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-emerald-600 rounded-xl transition-all uppercase tracking-wider"
+                                            >
+                                                <MdCheckCircleOutline className="mr-3" size={18} />
+                                                Complete
+                                            </button>
+                                            <div className="border-t border-slate-50 my-1"></div>
+                                            <button
+                                                onClick={() => {
+                                                    if (window.confirm('Delete this assignment permanently?')) {
+                                                        // Fallback delete logic
+                                                        setActiveMenuId(null);
+                                                    }
+                                                }}
+                                                className="w-full flex items-center px-4 py-3 text-[11px] font-black text-rose-500 hover:bg-rose-50 rounded-xl transition-all uppercase tracking-wider"
+                                            >
+                                                <MdDelete className="mr-3" size={18} />
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                )
             }
         ];
-
-        // Action Column
-        columns.push({
-            header: '',
-            accessor: 'actions',
-            render: (row) => (
-                <div className="flex items-center gap-2 justify-end">
-                    {role !== 'admin' && row.status?.toLowerCase() === 'pending' ? (
-                        <>
-                            <button
-                                onClick={() => handleRespond(row._id || row.id, 'accepted')}
-                                className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm"
-                                title="Accept Assignment"
-                            >
-                                <MdCheck size={18} />
-                            </button>
-                            <button
-                                onClick={() => {
-                                    const reason = prompt('Enter rejection reason:');
-                                    if (reason) handleRespond(row._id || row.id, 'rejected', reason);
-                                }}
-                                className="p-2 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 hover:bg-rose-100 transition-all shadow-sm"
-                                title="Reject Assignment"
-                            >
-                                <MdBlock size={18} />
-                            </button>
-                        </>
-                    ) : (
-                        <button className="flex items-center px-4 py-2 bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-primary-600 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all group">
-                            Control
-                            <MdArrowForward size={14} className="ml-1.5 group-hover:translate-x-1 transition-transform" />
-                        </button>
-                    )}
-                </div>
-            )
-        });
 
         return columns;
     };
@@ -246,12 +292,12 @@ const Assignments = () => {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <div className="flex items-center space-x-2 text-primary-600 font-bold text-xs uppercase tracking-[3px] mb-3">
+                    {/* <div className="flex items-center space-x-2 text-primary-600 font-bold text-xs uppercase tracking-[3px] mb-3">
                         <MdAssignment size={16} />
                         <span>operational core • {role.toUpperCase()} MODE</span>
-                    </div>
+                    </div> */}
                     <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter">
-                        {role === 'admin' ? 'Live Assignments' : 'My Assignments'}
+                        {role === 'admin' ? 'Assignments' : 'My Assignments'}
                     </h2>
                     <p className="text-slate-500 font-medium text-lg mt-3">
                         {role === 'admin'
@@ -309,13 +355,13 @@ const Assignments = () => {
             <Modal
                 isOpen={isBulkModalOpen}
                 onClose={() => setIsBulkModalOpen(false)}
-                title="Bulk Resource Deployment"
+                title="Assign truck to client"
                 maxWidth="max-w-4xl"
             >
                 <div className="space-y-6 p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
-                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">Target Vehicle Request</label>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">Vehicle Request</label>
                             <select
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                                 value={bulkData.requestId}
@@ -353,7 +399,7 @@ const Assignments = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">Asset Allocation (Assignment 1)</label>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">Asset Allocation</label>
                             <div className="space-y-3">
                                 <div className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100 focus-within:ring-2 focus-within:ring-primary-500 transition-all">
                                     <MdDirectionsCar size={20} className="text-primary-500 mr-3" />
@@ -412,8 +458,8 @@ const Assignments = () => {
                     </div>
 
                     <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
-                        <Button variant="ghost" onClick={() => setIsBulkModalOpen(false)}>Abort Protocol</Button>
-                        <Button onClick={handleBulkSubmit} className="shadow-lg shadow-primary-500/20">Finalize Deployment</Button>
+                        <Button variant="ghost" onClick={() => setIsBulkModalOpen(false)}>Cancel</Button>
+                        <Button onClick={handleBulkSubmit} className="shadow-lg shadow-primary-500/20">Confirm</Button>
                     </div>
                 </div>
             </Modal>

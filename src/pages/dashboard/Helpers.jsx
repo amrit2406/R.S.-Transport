@@ -18,6 +18,7 @@ const Helpers = () => {
     const helpersData = useSelector(state => state.helpers.list);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingHelper, setEditingHelper] = useState(null);
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -46,7 +47,7 @@ const Helpers = () => {
 
                 return {
                     ...h,
-                    _id: h._id || h.id || h.userId || h.user?._id || `hlp-${index}`,
+                    _id: String(h._id || h.id || h.userId || h.user?._id || `hlp-${index}`),
                     name,
                     email,
                     phone
@@ -64,18 +65,28 @@ const Helpers = () => {
 
     const handleRegisterHelper = async (payload) => {
         try {
-            console.log('Initiating Helper Onboarding:', payload);
-            const response = await axiosInstance.post('/api/users/onboard', payload);
+            console.log('Initiating Helper Operation:', payload);
+            const endpoint = editingHelper ? `/api/users/update/${editingHelper._id}` : '/api/users/onboard';
+            const method = editingHelper ? 'patch' : 'post';
+
+            const response = await axiosInstance[method](endpoint, payload);
 
             if (response.status === 200 || response.status === 201) {
                 fetchHelpers();
                 setIsModalOpen(false);
+                setEditingHelper(null);
             }
         } catch (error) {
-            console.error('Registration failed:', error);
-            const msg = error.response?.data?.message || 'Onboarding failed. Please check registry data.';
+            console.error('Operation failed:', error);
+            const msg = error.response?.data?.message || 'Operation failed. Please check registry data.';
             alert(msg);
         }
+    };
+
+    const handleEditHelper = (helper) => {
+        setEditingHelper(helper);
+        setIsModalOpen(true);
+        setActiveMenuId(null);
     };
 
     const handleDeleteHelper = (id) => {
@@ -138,14 +149,17 @@ const Helpers = () => {
                                     className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-slate-50 z-20 overflow-hidden"
                                 >
                                     <div className="p-2 space-y-1">
-                                        <button className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-teal-600 rounded-xl transition-all uppercase tracking-wider">
+                                        <button
+                                            onClick={() => handleEditHelper(row)}
+                                            className="w-full flex items-center px-4 py-3 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-teal-600 rounded-xl transition-all uppercase tracking-wider"
+                                        >
                                             <MdEdit className="mr-3" size={18} />
-                                            Update Assets
+                                            Update
                                         </button>
                                         <div className="border-t border-slate-50 my-1"></div>
                                         <button onClick={() => handleDeleteHelper(row._id)} className="w-full flex items-center px-4 py-3 text-[11px] font-black text-rose-500 hover:bg-rose-50 rounded-xl transition-all uppercase tracking-wider">
                                             <MdDelete className="mr-3" size={18} />
-                                            Terminate Asset
+                                            Terminate
                                         </button>
                                     </div>
                                 </motion.div>
@@ -169,13 +183,13 @@ const Helpers = () => {
                 <div>
                     <div className="flex items-center space-x-2 text-teal-600 font-bold text-[10px] uppercase tracking-[4pt] mb-3">
                         <MdSupervisorAccount size={16} />
-                        <span>Workforce Support Core</span>
+                        <span>Helpers Information</span>
                     </div>
-                    <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter">Support Personnel</h2>
+                    <h2 className="text-4xl font-black text-slate-900 font-display tracking-tighter">Helper</h2>
                     <p className="text-slate-500 font-medium text-lg mt-2 tracking-tight">Roster of logistics assistance staff and rapid-response helpers for asset fulfillment.</p>
                 </div>
                 <Button icon={MdAdd} size="lg" className="bg-teal-600 hover:bg-teal-700 shadow-xl shadow-teal-500/20 !rounded-2xl" onClick={() => setIsModalOpen(true)}>
-                    Recruit Personnel
+                    Add Helper
                 </Button>
             </div>
 
@@ -211,7 +225,7 @@ const Helpers = () => {
                 )}
             </div>
 
-            <div className={`premium-card !p-0 overflow-hidden border border-slate-50 shadow-heavy rounded-[32px] transition-all ${error ? 'mt-12' : ''}`}>
+            <div className={`premium-card !p-0 border border-slate-50 shadow-heavy rounded-[32px] transition-all ${error ? 'mt-12' : ''}`}>
                 {isLoading ? (
                     <div className="p-20 text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-600 mx-auto"></div>
@@ -222,8 +236,23 @@ const Helpers = () => {
                 )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Workforce Recruitment Terminal" maxWidth="max-w-4xl">
-                <HelperForm onSubmit={handleRegisterHelper} onCancel={() => setIsModalOpen(false)} />
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setEditingHelper(null);
+                }}
+                title={editingHelper ? "Helper Update Portal" : "Helper's Details"}
+                maxWidth="max-w-4xl"
+            >
+                <HelperForm
+                    onSubmit={handleRegisterHelper}
+                    onCancel={() => {
+                        setIsModalOpen(false);
+                        setEditingHelper(null);
+                    }}
+                    initialValues={editingHelper}
+                />
             </Modal>
         </div>
     );
