@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://marketing-palace-dates-attend.trycloudflare.com',
+  baseURL: import.meta.env.VITE_API_URL || 'https://variables-swap-universities-pulled.trycloudflare.com',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -44,6 +44,8 @@ axiosInstance.interceptors.response.use(
 
       localStorage.removeItem('token');
       localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userName');
 
       if (wasAuthenticated && !window.location.pathname.includes('/auth/login')) {
         window.location.href = '/auth/login';
